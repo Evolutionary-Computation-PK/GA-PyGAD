@@ -1,0 +1,47 @@
+DB_PREFIX: "sqlite:///"
+DB_DIR: "db"
+DB_FILE: "functions.db"
+
+hydra:
+  run:
+    dir: "."
+  job_logging:
+    root:
+      handlers: [file, console]
+      level: ERROR
+    handlers:
+      file:
+        class: logging.FileHandler
+        formatter: simple
+        filename: logs/hydra.log
+        level: ERROR
+      console:
+        class: logging.StreamHandler
+        formatter: simple
+        stream: ext://sys.stdout
+        level: ERROR
+    formatters:
+      simple:
+        format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+  hydra_logging:
+    root:
+      handlers: [file, console]
+      level: ERROR
+    handlers:
+      file:
+        class: logging.FileHandler
+        formatter: simple
+        filename: logs/hydra.log
+        level: ERROR
+      console:
+        class: logging.StreamHandler
+        formatter: simple
+        stream: ext://sys.stdout
+        level: ERROR
+    formatters:
+      simple:
+        format: '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+
+defaults:
+  - functions: happycat
+  - _self_

@@ -1,3 +1,5 @@
+from warnings import catch_warnings
+
 import numpy
 import random
 
@@ -6,7 +8,7 @@ class Crossover:
 
     # TODO: Przykładowa implementacja do zmiany (możemy korzystać z atrybutów ga_instance)
     @staticmethod
-    def arithmetic_crossover(parents, offspring_size, ga_instance):
+    def example_crossover(parents, offspring_size, ga_instance):
 
         """
         Applies single-point crossover between pairs of parents.
@@ -75,12 +77,141 @@ class Crossover:
         return offspring
 
     @staticmethod
+    def arithmetic_crossover(parents, offspring_size, ga_instance):
+        offspring = numpy.empty(offspring_size, dtype=ga_instance.gene_type[0])
+        k = offspring_size[0]
+
+        while k > 0:
+
+            try:
+                individual1_indx, individual2_indx = Crossover.generate_individuals(parents, offspring, ga_instance, k)
+            except Exception:
+                continue
+
+            new_chromosome1, new_chromosome2 = zip(*[
+                Crossover.generate_new_genes_arithmetic(parents[individual1_indx][j],
+                                                        parents[individual2_indx][j],
+                                                        ga_instance.init_range_low,
+                                                        ga_instance.init_range_high)
+                for j in range(parents.shape[1])
+            ])
+
+            offspring[k - 1] = new_chromosome1
+            offspring[k - 2] = new_chromosome2
+            k = k - 2
+
+        return offspring
+
+    @staticmethod
+    def generate_new_genes_arithmetic(gene1, gene2, start_interval, end_interval):
+        isValid = False
+        gene_individual1 = 0
+        gene_individual2 = 0
+
+        while not isValid:
+            alpha = numpy.random.rand()
+            gene_individual1 = alpha * gene1 + (1 - alpha) * gene2
+            gene_individual2 = alpha * gene2 + (1 - alpha) * gene1
+            isValid = Crossover.validate_gene_arithmetic(gene_individual1, start_interval, end_interval) and Crossover.validate_gene_arithmetic(
+                gene_individual2, start_interval, end_interval)
+
+        return gene_individual1, gene_individual2
+
+    @staticmethod
+    def validate_gene_arithmetic(gene, start_interval, end_interval):
+        return start_interval <= gene <= end_interval
+
+    @staticmethod
+    def generate_individuals(parents, offspring, ga_instance, k):
+        if not (ga_instance.crossover_probability is None):
+            probs = numpy.random.random(size=parents.shape[0])
+            indices = list(set(numpy.where(probs <= ga_instance.crossover_probability)[0]))
+
+            # If no parent satisfied the probability, no crossover is applied and a parent is selected as is.
+            if len(indices) == 0:
+                offspring[k, :] = parents[k % parents.shape[0], :]
+                raise Exception
+            elif len(indices) == 1:
+                parent1_idx = indices[0]
+                parent2_idx = parent1_idx
+            else:
+                indices = random.sample(indices, 2)
+                parent1_idx = indices[0]
+                parent2_idx = indices[1]
+        else:
+            # Index of the first parent to mate.
+            parent1_idx = k % parents.shape[0]
+            # Index of the second parent to mate.
+            parent2_idx = (k + 1) % parents.shape[0]
+        return parent1_idx, parent2_idx
+
+    @staticmethod
     def mean_crossover(parents, offspring_size, ga_instance):
-        pass
+        offspring = numpy.empty(offspring_size, dtype=ga_instance.gene_type[0])
+        k = offspring_size[0]
+
+        while k > 0:
+
+            try:
+                individual1_indx, individual2_indx = Crossover.generate_individuals(parents, offspring, ga_instance, k)
+            except Exception:
+                continue
+
+            new_individual = (parents[individual1_indx] + parents[individual2_indx])/2
+
+            offspring[k-1]=new_individual
+            k = k - 1
+
+        return offspring
+
 
     @staticmethod
     def linear_crossover(parents, offspring_size, ga_instance):
-        pass
+        offspring = numpy.empty(offspring_size, dtype=ga_instance.gene_type[0])
+        k = offspring_size[0]
+
+        while k > 0:
+            try:
+                individual1_indx, individual2_indx = Crossover.generate_individuals(parents, offspring, ga_instance, k)
+            except Exception:
+                continue
+
+            z_chromosomes = [Crossover.generate_gene_linear(0.5, 0.5, gene1, gene2, ga_instance.init_range_low, ga_instance.init_range_high) for gene1, gene2
+                             in zip(parents[individual1_indx], parents[individual2_indx])]
+
+
+            v_chromosomes = [Crossover.generate_gene_linear(1.5, -0.5, gene1, gene2, ga_instance.init_range_low, ga_instance.init_range_high) for gene1, gene2
+                             in zip(parents[individual1_indx], parents[individual2_indx])]
+
+
+            w_chromosomes = [Crossover.generate_gene_linear(-0.5, 1.5, gene1, gene2, ga_instance.init_range_low, ga_instance.init_range_high) for gene1, gene2 in
+                             zip(parents[individual1_indx], parents[individual2_indx])]
+
+
+            fitness_values = [
+                (ga_instance.fitness_func(ga_instance, z_chromosomes, None), z_chromosomes),
+                (ga_instance.fitness_func(ga_instance, v_chromosomes,  None), v_chromosomes),
+                (ga_instance.fitness_func(ga_instance, w_chromosomes,  None), w_chromosomes),
+            ]
+
+            sorted_chromosomes = sorted(fitness_values, key=lambda x: x[0], reverse=True)
+
+            new_individuals = [chromosome for _, chromosome in sorted_chromosomes[:2]]
+
+            offspring[k-1]=new_individuals[0]
+            offspring[k-2]=new_individuals[1]
+            k = k - 2
+
+        return offspring
+
+    @staticmethod
+    def generate_gene_linear(coeff1, coeff2, gene1, gene2, start_interval, end_interval):
+        result = coeff1 * gene1 + coeff2 * gene2
+        if result < start_interval:
+            return start_interval
+        elif result > end_interval:
+            return end_interval
+        return result
 
     @staticmethod
     def alfa_blend_crossover(parents, offspring_size, ga_instance):

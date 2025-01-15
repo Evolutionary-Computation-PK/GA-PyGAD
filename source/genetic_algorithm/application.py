@@ -21,7 +21,7 @@ func_Happycat = F132014(ndim=num_genes_Happycat).evaluate
 
 Rosenbrock = {
     # binary or real
-    "chosen_ga_type": "real",
+    "chosen_ga_type": "binary",
 
     "num_dim": num_genes_Rosenbrock,
     "function": func_Rosenbrock,
@@ -38,17 +38,17 @@ Rosenbrock = {
     "K_tournament": 3,
 
     "crossover_type_real": RealCrossoverStrategyEnum.ARITHMETIC,
-    "crossover_type_binary": BinaryCrossoverStrategyEnum.ONE_POINT,
+    "crossover_type_binary": BinaryCrossoverStrategyEnum.ONE_POINT.value,
     "crossover_probability": 0.8,
 
     "mutation_type_real": RealMutationStrategyEnum.GAUSSIAN,
-    "mutation_type_binary": BinaryMutationStrategyEnum.RANDOM,
+    "mutation_type_binary": BinaryMutationStrategyEnum.RANDOM.value,
     "mutation_probability": 0.2
 }
 
 Happycat = {
     # binary or real
-    "chosen_ga_type": "real",
+    "chosen_ga_type": "binary",
 
     "num_dim": num_genes_Happycat,
     "function": func_Happycat,
@@ -64,12 +64,12 @@ Happycat = {
     "keep_elitism": 1,
     "K_tournament": 3,
 
-    "crossover_type_binary": BinaryCrossoverStrategyEnum.ONE_POINT,
     "crossover_type_real": RealCrossoverStrategyEnum.ARITHMETIC,
+    "crossover_type_binary": BinaryCrossoverStrategyEnum.ONE_POINT.value,
     "crossover_probability": 0.8,
 
     "mutation_type_real": RealMutationStrategyEnum.GAUSSIAN,
-    "mutation_type_binary": BinaryMutationStrategyEnum.RANDOM,
+    "mutation_type_binary": BinaryMutationStrategyEnum.RANDOM.value,
     "mutation_probability": 0.2
 }
 

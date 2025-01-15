@@ -158,6 +158,7 @@ def on_generation(ga_instance):
 if __name__ == "__main__":
     number_of_trials = 10
     current_best_solution_fitness = 0
+    all_best_solutions_fitness = []
     all_solutions_fitness_from_best_run = []
     best_solution_parameters = None
 
@@ -202,6 +203,7 @@ if __name__ == "__main__":
 
         # sztuczka: odwracamy my narysował nam się oczekiwany wykres dla problemu minimalizacji
         ga_instance.best_solutions_fitness = [1. / x for x in ga_instance.best_solutions_fitness]
+        all_best_solutions_fitness.append(ga_instance.best_solutions_fitness)
         # ga_instance.plot_fitness()
 
         if current_best_solution_fitness < solution_fitness:
@@ -211,8 +213,18 @@ if __name__ == "__main__":
 
     logger.info("Best solution parameters in best trial = {best_solution_parameters}".format(
         best_solution_parameters=best_solution_parameters))
+    decoded_solution = BinaryUtils.decode_individual(best_solution_parameters,
+                                                     chosen_func_config["start_interval"],
+                                                     chosen_func_config["end_interval"],
+                                                     chosen_func_config["num_dim"])
+    logger.info("Best solution decoded parameters in best trial = {best_solution_parameters}".format(
+        best_solution_parameters=decoded_solution))
+
     logger.info("Best solution fitness in best trial = {best_solution_fitness}".format(
         best_solution_fitness=1. / current_best_solution_fitness))
+    logger.info("Min fitness = {min_fitness}".format(min_fitness=numpy.min(all_best_solutions_fitness)))
+    logger.info("Max fitness = {max_fitness}".format(max_fitness=numpy.max(all_best_solutions_fitness)))
+    logger.info("Average fitness = {average_fitness}".format(average_fitness=numpy.average(all_best_solutions_fitness)))
     logger.info("Average time = {average_time}".format(average_time=numpy.average(all_times)))
 
     all_solutions_fitness_from_best_run = np.array(all_solutions_fitness_from_best_run)

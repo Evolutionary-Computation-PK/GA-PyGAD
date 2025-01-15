@@ -49,7 +49,7 @@ class BinaryUtils:
         :param individual: Individual with possible multiple values to decode.
         :param start_interval: Start of the interval for variables decimal value.
         :param end_interval: End of the interval for variables decimal value.
-        :param number_of_variables: Number of values in the binary array.
+        :param number_of_variables: Number of values coded in the binary array.
         """
         binary_variables_values = np.split(individual, number_of_variables)
         return np.array([BinaryUtils.decode_binary_representation(start_interval, end_interval, len(binary_variable), binary_variable)

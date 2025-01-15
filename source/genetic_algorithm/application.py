@@ -1,5 +1,9 @@
 # na podstawie przykładu: https://pypi.org/project/pygad/1.0.18/
 import logging
+import time
+
+import numpy as np
+import pandas as pd
 import pygad
 import numpy
 import benchmark_functions as bf
@@ -27,24 +31,24 @@ Rosenbrock = {
     "function": func_Rosenbrock,
     "start_interval": -2.048,
     "end_interval": 2.048,
-    "precision_binary": 4,
+    "precision_binary": 3,
     # "num_parents_mating": 50,
 
     # To Modify
-    "num_generations": 100,
-    "sol_per_pop": 80,
+    "num_generations": 50,
+    "sol_per_pop": 100,
 
     "parent_selection_type": SelectionStrategyEnum.TOURNAMENT.value,
-    "keep_elitism": 1,
+    "keep_elitism": 5,
     "K_tournament": 3,
 
-    "crossover_type_real": RealCrossoverStrategyEnum.ARITHMETIC,
+    "crossover_type_real": RealCrossoverStrategyEnum.ALFA_BETA_BLEND,
     "crossover_type_binary": BinaryCrossoverStrategyEnum.ONE_POINT.value,
-    "crossover_probability": 0.8,
+    "crossover_probability": 0.7,
 
     "mutation_type_real": RealMutationStrategyEnum.GAUSSIAN,
     "mutation_type_binary": BinaryMutationStrategyEnum.RANDOM.value,
-    "mutation_probability": 0.2
+    "mutation_probability": 0.1
 }
 
 Happycat = {
@@ -55,7 +59,7 @@ Happycat = {
     "function": func_Happycat,
     "start_interval": -100,
     "end_interval": 100,
-    "precision_binary": 4,
+    "precision_binary": 3,
     # "num_parents_mating": 50,
 
     # To Modify
@@ -75,7 +79,7 @@ Happycat = {
     "mutation_probability": 0.2
 }
 
-chosen_func_config = Happycat
+chosen_func_config = Rosenbrock
 chosen_func_config["num_parents_mating"] = int(chosen_func_config["sol_per_pop"] / 2)
 fitness_batch_size = 10
 
@@ -85,6 +89,7 @@ if chosen_func_config["chosen_ga_type"] == "binary":
     end_interval = chosen_func_config["end_interval"]
     chosen_func_config["init_range_low"] = 0
     chosen_func_config["init_range_high"] = 2
+    chosen_func_config["gene_space"] = [0, 1]
     number_of_bits_for_gene = BinaryUtils.get_binary_length(start_interval, end_interval,
                                                             chosen_func_config["precision_binary"])
     chosen_func_config["num_genes"] = number_of_bits_for_gene * chosen_func_config["num_dim"]
@@ -106,6 +111,7 @@ elif chosen_func_config["chosen_ga_type"] == "real":
     chosen_func_config["num_genes"] = chosen_func_config["num_dim"]
     chosen_func_config["init_range_low"] = chosen_func_config["start_interval"]
     chosen_func_config["init_range_high"] = chosen_func_config["end_interval"]
+    chosen_func_config["gene_space"] = None
 
 
     def fitness_function_real(ga_instance, solution, solution_idx):
@@ -118,7 +124,6 @@ elif chosen_func_config["chosen_ga_type"] == "real":
     chosen_func_config["mutation_type"] = chosen_func_config["mutation_type_real"]
 else:
     raise ValueError("Invalid GA type")
-
 
 # Konfiguracja logowania
 
@@ -151,36 +156,57 @@ def on_generation(ga_instance):
 
 # Właściwy algorytm genetyczny
 if __name__ == "__main__":
-    ga_instance = pygad.GA(num_generations=chosen_func_config["num_generations"],
-                           sol_per_pop=chosen_func_config["sol_per_pop"],
-                           num_parents_mating=chosen_func_config["num_parents_mating"],
-                           num_genes=chosen_func_config["num_genes"],
-                           fitness_func=chosen_func_config["fitness_func"],
-                           init_range_low=chosen_func_config["init_range_low"],
-                           init_range_high=chosen_func_config["init_range_high"],
-                           gene_type=chosen_func_config["gene_type"],
+    number_of_trials = 10
+    current_best_solution_fitness = 0
+    all_solutions_fitness_from_best_run = []
 
-                           # mutation_num_genes=mutation_num_genes,
-                           parent_selection_type=chosen_func_config["parent_selection_type"],
-                           keep_elitism=chosen_func_config["keep_elitism"],
-                           K_tournament=chosen_func_config["K_tournament"],
-                           crossover_type=chosen_func_config["crossover_type"],
-                           crossover_probability=chosen_func_config["crossover_probability"],
-                           mutation_type=chosen_func_config["mutation_type"],
-                           mutation_probability=chosen_func_config["mutation_probability"],
-                           save_best_solutions=True,
-                           save_solutions=True,
-                           logger=logger,
-                           on_generation=on_generation,
-                           parallel_processing=['thread', 4])
+    for trial in range(number_of_trials):
+        ga_instance = pygad.GA(num_generations=chosen_func_config["num_generations"],
+                               sol_per_pop=chosen_func_config["sol_per_pop"],
+                               num_parents_mating=chosen_func_config["num_parents_mating"],
+                               num_genes=chosen_func_config["num_genes"],
+                               fitness_func=chosen_func_config["fitness_func"],
+                               init_range_low=chosen_func_config["init_range_low"],
+                               init_range_high=chosen_func_config["init_range_high"],
+                               gene_type=chosen_func_config["gene_type"],
+                               gene_space=chosen_func_config["gene_space"],
 
-    ga_instance.run()
+                               # mutation_num_genes=mutation_num_genes,
+                               parent_selection_type=chosen_func_config["parent_selection_type"],
+                               keep_elitism=chosen_func_config["keep_elitism"],
+                               K_tournament=chosen_func_config["K_tournament"],
+                               crossover_type=chosen_func_config["crossover_type"],
+                               crossover_probability=chosen_func_config["crossover_probability"],
+                               mutation_type=chosen_func_config["mutation_type"],
+                               mutation_probability=chosen_func_config["mutation_probability"],
+                               save_best_solutions=True,
+                               save_solutions=True,
+                               logger=logger,
+                               # on_generation=on_generation,
+                               parallel_processing=['thread', 12])
 
-    best = ga_instance.best_solution()
-    solution, solution_fitness, solution_idx = ga_instance.best_solution()
-    print("Parameters of the best solution : {solution}".format(solution=solution))
-    print("Fitness value of the best solution = {solution_fitness}".format(solution_fitness=1. / solution_fitness))
+        start_time = time.time()
+        ga_instance.run()
+        end_time = time.time()
+        ga_instance.logger.info("Execution Time = {execution_time}".format(execution_time=end_time - start_time))
 
-    # sztuczka: odwracamy my narysował nam się oczekiwany wykres dla problemu minimalizacji
-    ga_instance.best_solutions_fitness = [1. / x for x in ga_instance.best_solutions_fitness]
-    ga_instance.plot_fitness()
+        best = ga_instance.best_solution()
+        solution, solution_fitness, solution_idx = ga_instance.best_solution()
+        print("Parameters of the best solution : {solution}".format(solution=solution))
+        print("Fitness value of the best solution = {solution_fitness}".format(solution_fitness=1. / solution_fitness))
+
+        # sztuczka: odwracamy my narysował nam się oczekiwany wykres dla problemu minimalizacji
+        ga_instance.best_solutions_fitness = [1. / x for x in ga_instance.best_solutions_fitness]
+        # ga_instance.plot_fitness()
+
+        if current_best_solution_fitness < best[1]:
+            current_best_solution_fitness = best[1]
+            all_solutions_fitness_from_best_run = ga_instance.solutions_fitness
+
+    all_solutions_fitness_from_best_run = np.array(all_solutions_fitness_from_best_run)
+    all_solutions_fitness_from_best_run = 1. / all_solutions_fitness_from_best_run
+    all_solutions_fitness_from_best_run = np.split(all_solutions_fitness_from_best_run,
+                                                   chosen_func_config["num_generations"] + 1)
+
+    df = pd.DataFrame(all_solutions_fitness_from_best_run)
+    df.to_csv('all_solutions_fitness_from_best_run.csv', index=False, header=False)

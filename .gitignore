@@ -3,6 +3,7 @@ source/generated_data/*
 generated_data/*
 .hydra
 multirun
+*.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -29,6 +29,7 @@ Rosenbrock = {
     "end_interval": 2.048,
     "precision_binary": 4,
 
+    # To Modify
     "num_generations": 100,
     "sol_per_pop": 80,
     "num_parents_mating": 50,
@@ -56,6 +57,7 @@ Happycat = {
     "end_interval": 100,
     "precision_binary": 4,
 
+    # To Modify
     "num_generations": 100,
     "sol_per_pop": 80,
     "num_parents_mating": 50,
@@ -150,7 +152,7 @@ def on_generation(ga_instance):
 if __name__ == "__main__":
     ga_instance = pygad.GA(num_generations=chosen_func_config["num_generations"],
                            sol_per_pop=chosen_func_config["sol_per_pop"],
-                           num_parents_mating=chosen_func_config["num_parents_mating"],
+                           # num_parents_mating=chosen_func_config["num_parents_mating"],
                            num_genes=chosen_func_config["num_genes"],
                            fitness_func=chosen_func_config["fitness_func"],
                            init_range_low=chosen_func_config["init_range_low"],

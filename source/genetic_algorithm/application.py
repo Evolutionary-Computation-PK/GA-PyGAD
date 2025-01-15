@@ -64,12 +64,10 @@ Happycat = {
     "keep_elitism": 1,
     "K_tournament": 3,
 
-    # "crossover_type": BinaryCrossoverStrategyEnum.ONE_POINT,
     "crossover_type_binary": BinaryCrossoverStrategyEnum.ONE_POINT,
     "crossover_type_real": RealCrossoverStrategyEnum.ARITHMETIC,
     "crossover_probability": 0.8,
 
-    # "mutation_type": BinaryMutationStrategyEnum.RANDOM,
     "mutation_type_real": RealMutationStrategyEnum.GAUSSIAN,
     "mutation_type_binary": BinaryMutationStrategyEnum.RANDOM,
     "mutation_probability": 0.2

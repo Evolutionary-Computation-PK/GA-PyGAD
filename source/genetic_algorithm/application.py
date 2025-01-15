@@ -159,6 +159,7 @@ if __name__ == "__main__":
     number_of_trials = 10
     current_best_solution_fitness = 0
     all_solutions_fitness_from_best_run = []
+    all_times = []
 
     for trial in range(number_of_trials):
         ga_instance = pygad.GA(num_generations=chosen_func_config["num_generations"],
@@ -188,7 +189,9 @@ if __name__ == "__main__":
         start_time = time.time()
         ga_instance.run()
         end_time = time.time()
-        ga_instance.logger.info("Execution Time = {execution_time}".format(execution_time=end_time - start_time))
+        time = end_time - start_time
+        all_times.append(time)
+        ga_instance.logger.info("Execution Time = {execution_time}".format(execution_time=time))
 
         best = ga_instance.best_solution()
         solution, solution_fitness, solution_idx = ga_instance.best_solution()
@@ -210,3 +213,4 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(all_solutions_fitness_from_best_run)
     df.to_csv('all_solutions_fitness_from_best_run.csv', index=False, header=False)
+    logger.info("Average time = {average_time}".format(average_time=numpy.average(all_times)))

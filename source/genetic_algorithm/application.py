@@ -159,6 +159,8 @@ if __name__ == "__main__":
     number_of_trials = 10
     current_best_solution_fitness = 0
     all_solutions_fitness_from_best_run = []
+    best_solution_parameters = None
+
     all_times = []
 
     for trial in range(number_of_trials):
@@ -189,9 +191,9 @@ if __name__ == "__main__":
         start_time = time.time()
         ga_instance.run()
         end_time = time.time()
-        time = end_time - start_time
-        all_times.append(time)
-        ga_instance.logger.info("Execution Time = {execution_time}".format(execution_time=time))
+        exec_time = end_time - start_time
+        all_times.append(exec_time)
+        ga_instance.logger.info("Execution Time = {execution_time}".format(execution_time=exec_time))
 
         best = ga_instance.best_solution()
         solution, solution_fitness, solution_idx = ga_instance.best_solution()
@@ -202,15 +204,20 @@ if __name__ == "__main__":
         ga_instance.best_solutions_fitness = [1. / x for x in ga_instance.best_solutions_fitness]
         # ga_instance.plot_fitness()
 
-        if current_best_solution_fitness < best[1]:
-            current_best_solution_fitness = best[1]
+        if current_best_solution_fitness < solution_fitness:
+            current_best_solution_fitness = solution_fitness
             all_solutions_fitness_from_best_run = ga_instance.solutions_fitness
+            best_solution_parameters = solution
+
+    logger.info("Best solution parameters in best trial = {best_solution_parameters}".format(
+        best_solution_parameters=best_solution_parameters))
+    logger.info("Best solution fitness in best trial = {best_solution_fitness}".format(
+        best_solution_fitness=1. / current_best_solution_fitness))
+    logger.info("Average time = {average_time}".format(average_time=numpy.average(all_times)))
 
     all_solutions_fitness_from_best_run = np.array(all_solutions_fitness_from_best_run)
     all_solutions_fitness_from_best_run = 1. / all_solutions_fitness_from_best_run
     all_solutions_fitness_from_best_run = np.split(all_solutions_fitness_from_best_run,
                                                    chosen_func_config["num_generations"] + 1)
-
     df = pd.DataFrame(all_solutions_fitness_from_best_run)
     df.to_csv('all_solutions_fitness_from_best_run.csv', index=False, header=False)
-    logger.info("Average time = {average_time}".format(average_time=numpy.average(all_times)))

@@ -26,7 +26,7 @@ func_Happycat = F132014(ndim=num_genes_Happycat).evaluate
 
 Rosenbrock = {
     # binary or real
-    "chosen_ga_type": "binary",
+    "chosen_ga_type": "real",
 
     "num_dim": num_genes_Rosenbrock,
     "function": func_Rosenbrock,
@@ -34,27 +34,26 @@ Rosenbrock = {
     "end_interval": 2.048,
     "precision_binary": 3,
     # "num_parents_mating": 50,
-
-    # To Modify
-    "num_generations": 400,
-    "sol_per_pop": 200,
+   # To Modify
+    "num_generations": 500,
+    "sol_per_pop": 540,
 
     "parent_selection_type": SelectionStrategyEnum.TOURNAMENT.value,
-    "keep_elitism": 6,
-    "K_tournament": 3,
+    "keep_elitism": 3,
+    "K_tournament": 4,
 
-    "crossover_type_real": RealCrossoverStrategyEnum.LINEAR,
+    "crossover_type_real": RealCrossoverStrategyEnum.ALFA_BLEND,
     "crossover_type_binary": BinaryCrossoverStrategyEnum.ONE_POINT.value,
-    "crossover_probability": 0.89,
+    "crossover_probability": 0.82,
 
-    "mutation_type_real": RealMutationStrategyEnum.UNIFORM,
+    "mutation_type_real": RealMutationStrategyEnum.GAUSSIAN,
     "mutation_type_binary": BinaryMutationStrategyEnum.RANDOM.value,
-    "mutation_probability": 0.17
+    "mutation_probability": 0.14
 }
 
 Happycat = {
     # binary or real
-    "chosen_ga_type": "real",
+    "chosen_ga_type": "binary",
 
     "num_dim": num_genes_Happycat,
     "function": func_Happycat,
@@ -64,23 +63,23 @@ Happycat = {
     # "num_parents_mating": 50,
 
     # To Modify
-    "num_generations": 100,
-    "sol_per_pop": 80,
+    "num_generations": 450,
+	    "sol_per_pop": 350,
 
-    "parent_selection_type": SelectionStrategyEnum.TOURNAMENT.value,
-    "keep_elitism": 1,
-    "K_tournament": 3,
+	    "parent_selection_type": SelectionStrategyEnum.ROULETTE.value,
+	    "keep_elitism": 3,
+	    "K_tournament": 3,
 
-    "crossover_type_real": RealCrossoverStrategyEnum.ARITHMETIC,
-    "crossover_type_binary": BinaryCrossoverStrategyEnum.ONE_POINT.value,
-    "crossover_probability": 0.8,
+	    "crossover_type_real": RealCrossoverStrategyEnum.ARITHMETIC,
+	    "crossover_type_binary": BinaryCrossoverStrategyEnum.UNIFORM.value,
+	    "crossover_probability": 0.8,
 
-    "mutation_type_real": RealMutationStrategyEnum.GAUSSIAN,
-    "mutation_type_binary": BinaryMutationStrategyEnum.RANDOM.value,
-    "mutation_probability": 0.2
+	    "mutation_type_real": RealMutationStrategyEnum.GAUSSIAN,
+	    "mutation_type_binary": BinaryMutationStrategyEnum.SWAP.value,
+	    "mutation_probability": 0.08
 }
 
-chosen_func_config = Rosenbrock
+chosen_func_config = Happycat
 chosen_func_config["num_parents_mating"] = int(chosen_func_config["sol_per_pop"] / 2)
 fitness_batch_size = 10
 
@@ -155,7 +154,7 @@ def callback_generation(ga_instance):
 
     average_fitness_per_generation.append(average_fitness)
     stddev_fitness_per_generation.append(stddev_fitness)
-    best_fitness_per_generation.append(np.min(generation_fitness))
+    best_fitness_per_generation.append(np.min(inverted_fitness))
 
     print(f"Generation {ga_instance.generations_completed}: "
           f"Min Fitness = {min_fitness:.6f}, "
@@ -166,7 +165,7 @@ def callback_generation(ga_instance):
 
 
 if __name__ == "__main__":
-    number_of_trials = 10
+    number_of_trials = 3
     current_best_solution_fitness = 0
     all_best_solutions_fitness = []
     all_solutions_fitness_from_best_run = []
@@ -226,17 +225,17 @@ if __name__ == "__main__":
 
         plt.figure(figsize=(8, 6))
         plt.plot(generations, average_fitness_per_generation, marker='o', color='blue')
-        plt.title("Średnia fitness w każdej generacji")
-        plt.xlabel("Generacja")
-        plt.ylabel("Średnia fitness")
+        plt.title("Wykres średniej wartości funkcji fitness w każdej epoce")
+        plt.xlabel("Epoka")
+        plt.ylabel("Średnia wartość funkcji fitness")
         plt.grid()
         plt.savefig("graph/average_fitness_plot"+str(trial)+".png")
         plt.close()
 
         plt.figure(figsize=(8, 6))
         plt.plot(generations, stddev_fitness_per_generation, marker='s', color='orange')
-        plt.title("Odchylenie standardowe fitness w każdej generacji")
-        plt.xlabel("Generacja")
+        plt.title("Wykres odchylenia standardowego w poszczególnych epokach")
+        plt.xlabel("Epoka")
         plt.ylabel("Odchylenie standardowe")
         plt.grid()
         plt.savefig("graph/stddev_fitness_plot"+str(trial)+".png")
@@ -244,9 +243,9 @@ if __name__ == "__main__":
 
         plt.figure(figsize=(8, 6))
         plt.plot(generations, best_fitness_per_generation, marker='^', color='green')
-        plt.title("Najlepszy fitness w każdej generacji")
-        plt.xlabel("Generacja")
-        plt.ylabel("Najlepszy fitness")
+        plt.title("Najlepsza wartość funkcji fitness w każdej epoce")
+        plt.xlabel("Epoka")
+        plt.ylabel("Najlepsza wartość funkcji fitness")
         plt.grid()
         plt.savefig("graph/best_fitness_plot"+str(trial)+".png")
         plt.close()

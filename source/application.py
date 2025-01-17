@@ -25,7 +25,7 @@ func_Happycat = F132014(ndim=num_genes_Happycat).evaluate
 
 Rosenbrock = {
     # binary or real
-    "chosen_ga_type": "binary",
+    "chosen_ga_type": "real",
 
     "num_dim": num_genes_Rosenbrock,
     "function": func_Rosenbrock,

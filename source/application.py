@@ -17,6 +17,13 @@ from source.genetic_algorithm.real.strategies import MutationStrategyEnum as Rea
 from source.genetic_algorithm.selection_strategies import SelectionStrategyEnum
 from source.utils.binary_utils import BinaryUtils
 
+import os
+import multiprocessing
+
+# Liczba logicznych rdzeni
+logical_cores = os.cpu_count()
+print(f"Liczba logicznych rdzeni CPU: {logical_cores}")
+
 # Konfiguracja algorytmu genetycznego
 
 num_genes_Rosenbrock = 2
@@ -26,7 +33,7 @@ func_Happycat = F132014(ndim=num_genes_Happycat).evaluate
 
 Rosenbrock = {
     # binary or real
-    "chosen_ga_type": "real",
+    "chosen_ga_type": "binary",
 
     "num_dim": num_genes_Rosenbrock,
     "function": func_Rosenbrock,
@@ -34,21 +41,22 @@ Rosenbrock = {
     "end_interval": 2.048,
     "precision_binary": 3,
     # "num_parents_mating": 50,
-   # To Modify
-    "num_generations": 500,
-    "sol_per_pop": 540,
 
-    "parent_selection_type": SelectionStrategyEnum.TOURNAMENT.value,
-    "keep_elitism": 3,
-    "K_tournament": 4,
+    # To Modify
+    "num_generations": 100,
+    "sol_per_pop": 80,
 
-    "crossover_type_real": RealCrossoverStrategyEnum.ALFA_BLEND,
-    "crossover_type_binary": BinaryCrossoverStrategyEnum.ONE_POINT.value,
-    "crossover_probability": 0.82,
+    "parent_selection_type": SelectionStrategyEnum.ROULETTE.value,
+    "keep_elitism": 1,
+    "K_tournament": 3,
+
+    "crossover_type_real": RealCrossoverStrategyEnum.ARITHMETIC,
+    "crossover_type_binary": BinaryCrossoverStrategyEnum.UNIFORM.value,
+    "crossover_probability": 0.8,
 
     "mutation_type_real": RealMutationStrategyEnum.GAUSSIAN,
-    "mutation_type_binary": BinaryMutationStrategyEnum.RANDOM.value,
-    "mutation_probability": 0.14
+    "mutation_type_binary": BinaryMutationStrategyEnum.SWAP.value,
+    "mutation_probability": 0.2
 }
 
 Happycat = {
@@ -63,20 +71,20 @@ Happycat = {
     # "num_parents_mating": 50,
 
     # To Modify
-    "num_generations": 450,
-	    "sol_per_pop": 350,
+    "num_generations": 300,
+    "sol_per_pop": 350,
 
-	    "parent_selection_type": SelectionStrategyEnum.ROULETTE.value,
-	    "keep_elitism": 3,
-	    "K_tournament": 3,
+    "parent_selection_type": SelectionStrategyEnum.TOURNAMENT.value,
+    "keep_elitism": 10,
+    "K_tournament": 3,
 
-	    "crossover_type_real": RealCrossoverStrategyEnum.ARITHMETIC,
-	    "crossover_type_binary": BinaryCrossoverStrategyEnum.UNIFORM.value,
-	    "crossover_probability": 0.8,
+    "crossover_type_real": RealCrossoverStrategyEnum.ALFA_BETA_BLEND,
+    "crossover_type_binary": BinaryCrossoverStrategyEnum.UNIFORM.value,
+    "crossover_probability": 0.8,
 
-	    "mutation_type_real": RealMutationStrategyEnum.GAUSSIAN,
-	    "mutation_type_binary": BinaryMutationStrategyEnum.SWAP.value,
-	    "mutation_probability": 0.08
+    "mutation_type_real": RealMutationStrategyEnum.GAUSSIAN,
+    "mutation_type_binary": BinaryMutationStrategyEnum.RANDOM.value,
+    "mutation_probability": 0.1
 }
 
 chosen_func_config = Happycat
@@ -98,7 +106,7 @@ if chosen_func_config["chosen_ga_type"] == "binary":
     def fitness_function_binary(ga_instance, solution, solution_idx):
         decoded_individual = BinaryUtils.decode_individual(solution, start_interval, end_interval,
                                                            chosen_func_config["num_dim"])
-        return 1. / chosen_func_config["function"](decoded_individual)
+        return 1. / (chosen_func_config["function"](decoded_individual) + 1e-10)
 
 
     chosen_func_config["fitness_func"] = fitness_function_binary
@@ -115,9 +123,7 @@ elif chosen_func_config["chosen_ga_type"] == "real":
 
 
     def fitness_function_real(ga_instance, solution, solution_idx):
-        if chosen_func_config["function"](solution) == 0:
-            return 0
-        return 1. / chosen_func_config["function"](solution)
+        return 1. / (chosen_func_config["function"](solution) + 1e-10)
 
 
     chosen_func_config["fitness_func"] = fitness_function_real
@@ -163,9 +169,9 @@ def callback_generation(ga_instance):
           f"Std Dev Fitness = {stddev_fitness:.6f}")
 
 
-
+# Właściwy algorytm genetyczny
 if __name__ == "__main__":
-    number_of_trials = 3
+    number_of_trials = 10
     current_best_solution_fitness = 0
     all_best_solutions_fitness = []
     all_solutions_fitness_from_best_run = []
@@ -193,10 +199,10 @@ if __name__ == "__main__":
                                mutation_type=chosen_func_config["mutation_type"],
                                mutation_probability=chosen_func_config["mutation_probability"],
                                save_best_solutions=True,
-                               save_solutions=True,
+                               # save_solutions=True,
                                logger=logger,
                                on_generation= callback_generation,
-                               parallel_processing=['thread', 12])
+                               parallel_processing=['thread', 10])
 
         start_time = time.time()
         ga_instance.run()
@@ -217,7 +223,7 @@ if __name__ == "__main__":
 
         if current_best_solution_fitness < solution_fitness:
             current_best_solution_fitness = solution_fitness
-            all_solutions_fitness_from_best_run = ga_instance.solutions_fitness
+            #     all_solutions_fitness_from_best_run = ga_instance.solutions_fitness
             best_solution_parameters = solution
             best_solution_index = trial
 
@@ -270,9 +276,9 @@ if __name__ == "__main__":
     logger.info("Average time = {average_time}".format(average_time=numpy.average(all_times)))
     logger.info("Best index ={best_solution_index}".format(best_solution_index=best_solution_index))
 
-    all_solutions_fitness_from_best_run = np.array(all_solutions_fitness_from_best_run)
-    all_solutions_fitness_from_best_run = 1. / all_solutions_fitness_from_best_run
-    all_solutions_fitness_from_best_run = np.split(all_solutions_fitness_from_best_run,
-                                                   chosen_func_config["num_generations"] + 1)
-    df = pd.DataFrame(all_solutions_fitness_from_best_run)
-    df.to_csv('all_solutions_fitness_from_best_run.csv', index=False, header=False)
+    # all_solutions_fitness_from_best_run = np.array(all_solutions_fitness_from_best_run)
+    # all_solutions_fitness_from_best_run = 1. / all_solutions_fitness_from_best_run
+    # all_solutions_fitness_from_best_run = np.split(all_solutions_fitness_from_best_run,
+    #                                                chosen_func_config["num_generations"] + 1)
+    # df = pd.DataFrame(all_solutions_fitness_from_best_run)
+    # df.to_csv('all_solutions_fitness_from_best_run.csv', index=False, header=False)

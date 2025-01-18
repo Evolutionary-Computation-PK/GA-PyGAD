@@ -8,6 +8,7 @@ import pygad
 import numpy
 import benchmark_functions as bf
 from opfunu.cec_based.cec2014 import F132014
+import matplotlib.pyplot as plt
 
 from source.genetic_algorithm.binary.strategies import CrossoverStrategyEnum as BinaryCrossoverStrategyEnum
 from source.genetic_algorithm.binary.strategies import MutationStrategyEnum as BinaryMutationStrategyEnum
@@ -144,21 +145,28 @@ console_format = logging.Formatter('%(message)s')
 console_handler.setFormatter(console_format)
 logger.addHandler(console_handler)
 
+average_fitness_per_generation = []
+stddev_fitness_per_generation = []
+best_fitness_per_generation = []
 
-def on_generation(ga_instance):
-    ga_instance.logger.info("Generation = {generation}".format(generation=ga_instance.generations_completed))
-    solution, solution_fitness, solution_idx = ga_instance.best_solution(
-        pop_fitness=ga_instance.last_generation_fitness)
-    ga_instance.logger.info("Best    = {fitness}".format(fitness=1. / solution_fitness))
-    ga_instance.logger.info("Individual    = {solution}".format(solution=repr(solution)))
+def callback_generation(ga_instance):
+    generation_fitness = ga_instance.last_generation_fitness
+    inverted_fitness = np.array([1. / x for x in generation_fitness])
 
-    tmp = [1. / x for x in ga_instance.last_generation_fitness]  # ponownie odwrotność by zrobić sobie dobre statystyki
+    min_fitness = np.min(inverted_fitness)
+    max_fitness = np.max(inverted_fitness)
+    average_fitness = np.mean(inverted_fitness)
+    stddev_fitness = np.std(inverted_fitness)
 
-    ga_instance.logger.info("Min    = {min}".format(min=numpy.min(tmp)))
-    ga_instance.logger.info("Max    = {max}".format(max=numpy.max(tmp)))
-    ga_instance.logger.info("Average    = {average}".format(average=numpy.average(tmp)))
-    ga_instance.logger.info("Std    = {std}".format(std=numpy.std(tmp)))
-    ga_instance.logger.info("\r\n")
+    average_fitness_per_generation.append(average_fitness)
+    stddev_fitness_per_generation.append(stddev_fitness)
+    best_fitness_per_generation.append(np.min(inverted_fitness))
+
+    print(f"Generation {ga_instance.generations_completed}: "
+          f"Min Fitness = {min_fitness:.6f}, "
+          f"Max Fitness = {max_fitness:.6f}, "
+          f"Average Fitness = {average_fitness:.6f}, "
+          f"Std Dev Fitness = {stddev_fitness:.6f}")
 
 
 # Właściwy algorytm genetyczny
@@ -168,7 +176,7 @@ if __name__ == "__main__":
     all_best_solutions_fitness = []
     all_solutions_fitness_from_best_run = []
     best_solution_parameters = None
-
+    best_solution_index = 0
     all_times = []
 
     for trial in range(number_of_trials):
@@ -193,7 +201,7 @@ if __name__ == "__main__":
                                save_best_solutions=True,
                                # save_solutions=True,
                                logger=logger,
-                               # on_generation=on_generation,
+                               on_generation= callback_generation,
                                parallel_processing=['thread', 10])
 
         start_time = time.time()
@@ -217,6 +225,39 @@ if __name__ == "__main__":
             current_best_solution_fitness = solution_fitness
             #     all_solutions_fitness_from_best_run = ga_instance.solutions_fitness
             best_solution_parameters = solution
+            best_solution_index = trial
+
+        generations = range(len(average_fitness_per_generation))
+
+        plt.figure(figsize=(8, 6))
+        plt.plot(generations, average_fitness_per_generation, marker='o', color='blue')
+        plt.title("Wykres średniej wartości funkcji fitness w każdej epoce")
+        plt.xlabel("Epoka")
+        plt.ylabel("Średnia wartość funkcji fitness")
+        plt.grid()
+        plt.savefig("graph/average_fitness_plot"+str(trial)+".png")
+        plt.close()
+
+        plt.figure(figsize=(8, 6))
+        plt.plot(generations, stddev_fitness_per_generation, marker='s', color='orange')
+        plt.title("Wykres odchylenia standardowego w poszczególnych epokach")
+        plt.xlabel("Epoka")
+        plt.ylabel("Odchylenie standardowe")
+        plt.grid()
+        plt.savefig("graph/stddev_fitness_plot"+str(trial)+".png")
+        plt.close()
+
+        plt.figure(figsize=(8, 6))
+        plt.plot(generations, best_fitness_per_generation, marker='^', color='green')
+        plt.title("Najlepsza wartość funkcji fitness w każdej epoce")
+        plt.xlabel("Epoka")
+        plt.ylabel("Najlepsza wartość funkcji fitness")
+        plt.grid()
+        plt.savefig("graph/best_fitness_plot"+str(trial)+".png")
+        plt.close()
+        average_fitness_per_generation = []
+        stddev_fitness_per_generation = []
+        best_fitness_per_generation = []
 
     logger.info("Best solution parameters in best trial = {best_solution_parameters}".format(
         best_solution_parameters=best_solution_parameters))
@@ -233,6 +274,7 @@ if __name__ == "__main__":
     logger.info("Max fitness = {max_fitness}".format(max_fitness=numpy.max(all_best_solutions_fitness)))
     logger.info("Average fitness = {average_fitness}".format(average_fitness=numpy.average(all_best_solutions_fitness)))
     logger.info("Average time = {average_time}".format(average_time=numpy.average(all_times)))
+    logger.info("Best index ={best_solution_index}".format(best_solution_index=best_solution_index))
 
     # all_solutions_fitness_from_best_run = np.array(all_solutions_fitness_from_best_run)
     # all_solutions_fitness_from_best_run = 1. / all_solutions_fitness_from_best_run
